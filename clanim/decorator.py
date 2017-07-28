@@ -17,7 +17,6 @@ from .animation import arrow
 
 daiquiri.setup(level=logging.WARNING)
 LOGGER = daiquiri.getLogger(__name__)
-DEFAULT_ANIMATION = arrow
 
 class Animate:
     """A decorator class for adding a CLI animation to a slow-running funciton.
@@ -29,39 +28,50 @@ class Animate:
     If no argument is given, the 'arrow' animation is selected by default.
     """
 
-    def __init__(self, *args):
+    def __init__(self, *args, animation=arrow(), msg='Working ...', step=.1):
         """Constructor.
 
         Args:
-            *args (tuple): Should consist of a callable and/or a generator
-            producing animation steps.
+            args (tuple): Should either be empty, or consist of a single callable
+            (the function to run alongside the animation).
+            animation (generator): A generator that yields strings for the animation.
+            msg (str): A message to display alongside the animation.
+            step (float): Seconds between each animation frame.
         """
-        LOGGER.info("Animate __init__ called with:" + str(args))
-        self.args = None
-        if len(args) == 1 and callable(args[0]):
-            func = args[0]
-            self._call = functools.partial(self._call_noargs, func)
-            functools.update_wrapper(self, func)
+        cls = self.__class__
+        if len(args) > 1:
+            raise TypeError("{.__name__!r} takes at most 1 positional argument "
+                            "but {} were given".format(cls, len(args)))
+        elif len(args) == 1:
+            if callable(args[0]):
+                func = args[0]
+                self._call = functools.partial(self._call_no_kwargs, animation,
+                                               step, msg, func)
+                functools.update_wrapper(self, func)
+            else:
+                raise TypeError("Positional argument for {.__name__!r} must be "
+                                "callable".format(cls))
         else:
-            self.args = args
-            self._call = self._call_args
+            self._call = functools.partial(self._call_with_kwargs, animation,
+                                           step, msg)
 
-    async def _async_supervisor(self, func, animation_cycle, *args, **kwargs):
+    async def _async_supervisor(self, func, animation_, step, msg, *args, **kwargs):
         """Supervisor for running an animation with an asynchronous function.
 
         Args:
             func (function): A function to be run alongside an animation.
-            animation_cycle (generator): An infinite generator that produces
+            animation_ (generator): An infinite generator that produces
             strings for the animation.
-            *args (tuple): Arguments for self.func.
-            **kwargs (dict): Keyword arguments for self.func.
+            step (float): Seconds between each animation frame.
+            msg (str): The message to be displayed next to the animation.
+            *args (tuple): Arguments for func.
+            **kwargs (dict): Keyword arguments for func.
         Returns:
-            The result of self.func(*args, **kwargs)
+            The result of func(*args, **kwargs)
         Raises:
-            Any exception that is thrown when executing self.func.
+            Any exception that is thrown when executing func.
         """
-        animation = asyncio.ensure_future(async_animation(
-            'ANIMATION', animation_cycle))
+        animation = asyncio.ensure_future(async_animation(animation_, step, msg))
         try:
             result = await func(*args, **kwargs)
         except Exception:
@@ -70,23 +80,25 @@ class Animate:
             animation.cancel()
         return result
 
-    def _sync_supervisor(self, func, animation_cycle, *args, **kwargs):
+    def _sync_supervisor(self, func, animation_, step, msg, *args, **kwargs):
         """Supervisor for running an animation with a synchronous function.
 
         Args:
             func (function): A function to be run alongside an animation.
-            animation_cycle (generator): An infinite generator that produces
+            animation_ (generator): An infinite generator that produces
             strings for the animation.
-            *args (tuple): Arguments for self.func.
-            **kwargs (dict): Keyword arguments for self.func.
+            step (float): Seconds between each animation frame.
+            msg (str): The message to be displayed next to the animation.
+            args (tuple): Arguments for func.
+            kwargs (dict): Keyword arguments for func.
         Returns:
-            The result of self.func(*args, **kwargs)
+            The result of func(*args, **kwargs)
         Raises:
-            Any exception that is thrown when executing self.func.
+            Any exception that is thrown when executing func.
         """
         signal = Signal()
         animation = threading.Thread(target=sync_animation,
-                                     args=('ANIMATION', animation_cycle, signal))
+                                     args=(animation_, step, msg, signal))
         animation.start()
         try:
             result = func(*args, **kwargs)
@@ -109,27 +121,34 @@ class Animate:
             supervisor = self._sync_supervisor
         return functools.partial(supervisor, func)
 
-    def _call_noargs(self, func, *args, **kwargs):
-        """The function that __call__ calls if the constructor only received
-        a callable (i.e. the decorated function).
+    def _call_no_kwargs(self, animation_, step, msg, func, *args, **kwargs):
+        """The function that __call__ calls if the constructor did not recieve
+        any kwargs.
 
         NOTE: This method should ONLY be called directly in the constructor!
 
         Args:
+            animation_ (generator): A generator yielding strings for the animation.
+            step (float): Seconds between each animation frame.
+            msg (str): The message to be displayed next to the animation.
             func (function): A function to run alongside an animation.
+            args (tuple): Positional arguments for func.
+            kwargs (dict): Keyword arguments for func.
         Returns:
             A function if func is a function, and a coroutine if func is a
             coroutine.
         """
-        return self._select_supervisor(func)(DEFAULT_ANIMATION(), *args, **kwargs)
+        return self._select_supervisor(func)(animation_, step, msg, *args,
+                                             **kwargs)
 
-    def _call_args(self, func):
-        """The function that __call__ calls when the constructor did not receive
-        only a callable (i.e. the decorated function).
+    def _call_with_kwargs(self, animation_, step, msg, func):
+        """The function that __call__ calls when the constructor received kwargs.
 
         NOTE: This method should ONLY be called directly in the constructor!
 
         Args:
+            animation_ (generator): A generator yielding strings for the animation.
+            msg (str): The message to be displayed next to the animation.
             func (function): A function to run alongside an animation.
         Returns:
             A function if func is a function, and a coroutine if func is a
@@ -137,8 +156,8 @@ class Animate:
         """
         @functools.wraps(func)
         def wrapper(*args, **kwargs):
-            animation_cycle = self.args[0]
-            return self._select_supervisor(func)(animation_cycle, *args, **kwargs)
+            return self._select_supervisor(func)(animation_, step, msg, *args,
+                                                 **kwargs)
         return wrapper
 
     def __call__(self, *args):

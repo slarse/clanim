@@ -23,20 +23,20 @@ def erase(status):
     """
     sys.stdout.write('\x08'*len(status))
 
-def sync_animation(msg, animation_cycle, signal):
+def sync_animation(animation_cycle, step, msg, signal):
     """Print out the animation cycle to stdout. This function is for use with
     synchronous functions and must be run in a thread.
 
     Args:
-        msg (str): A message to display.
         animation_cycle (generator): A generator that produces strings for the
         animation. Should be endless.
+        step (float): Seconds between each animation frame.
+        msg (str): A message to display.
         signal (Signal): An object that can be used to signal the thread to
         stop.
     """
-    sleep_time = .1
     while not signal.done:
-        time.sleep(sleep_time)
+        time.sleep(step)
         frame = next(animation_cycle)
         status = ''.join(frame) + ' ' + msg
         sys.stdout.write(status)
@@ -58,17 +58,17 @@ async def await_sleep_and_continue_unless_cancelled(sleep_time):
     except asyncio.CancelledError:
         return False
 
-async def async_animation(msg, animation_cycle):
+async def async_animation(animation_cycle, step, msg):
     """Print out the animation cycle to stdout. This function is for use with
     asynchronous functions and must be run in an event loop.
 
     Args:
-        msg (str): A message to display.
         animation_cycle (generator): A generator that produces strings for the
         animation. Should be endless.
+        step (float): Seconds between each animation frame.
+        msg (str): A message to display.
     """
-    sleep_time = .1
-    while await await_sleep_and_continue_unless_cancelled(sleep_time):
+    while await await_sleep_and_continue_unless_cancelled(step):
         frame = next(animation_cycle)
         status = ''.join(frame) + ' ' + msg
         sys.stdout.write(status)
