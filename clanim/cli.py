@@ -8,6 +8,11 @@
 import sys
 import time
 import asyncio
+import logging
+import daiquiri
+
+daiquiri.setup(level=logging.INFO)
+LOGGER = daiquiri.getLogger(__name__)
 
 def erase(status):
     """Erases the given status message from stdout by backspacing as many times
@@ -48,7 +53,7 @@ async def await_sleep_and_continue_unless_cancelled(sleep_time):
         False if a CancelledError is raised during the sleep, else True.
     """
     try:
-        await asyncio.sleep(.1)
+        await asyncio.sleep(sleep_time)
         return True
     except asyncio.CancelledError:
         return False

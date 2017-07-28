@@ -7,8 +7,9 @@ with open('README.rst') as f:
 with open('LICENSE') as f:
     license = f.read()
 
-test_requirements = ['pytest>=3.1.1', 'pytest-cov>=2.5.1', 'codecov']
-required = []
+test_requirements = ['pytest>=3.1.1', 'pytest-cov>=2.5.1', 'codecov', 
+                     'asynctest']
+required = ['daiquiri']
 
 setup(
     name='clanim',
