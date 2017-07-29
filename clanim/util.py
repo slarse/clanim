@@ -7,10 +7,9 @@
 .. moduleauthor:: Simon Larsén <slarse@kth.se>
 """
 import asyncio
-import inspect
 import functools
 import threading
-from .cli import sync_animation, async_animation
+from .cli import animate_cli
 
 class Signal:
     """A wrapper for a boolean value used to signal the end of a thread's
@@ -23,7 +22,7 @@ def get_supervisor(func):
     Args:
         func (function): A function.
     """
-    if inspect.iscoroutinefunction(func):
+    if asyncio.iscoroutinefunction(func):
         supervisor = _async_supervisor
     else:
         supervisor = _sync_supervisor
@@ -45,13 +44,17 @@ async def _async_supervisor(func, animation_, step, msg, *args, **kwargs):
     Raises:
         Any exception that is thrown when executing func.
     """
-    animation = asyncio.ensure_future(async_animation(animation_, step, msg))
+    signal = Signal()
+    animation = threading.Thread(target=animate_cli,
+                                 args=(animation_, step, msg, signal))
+    animation.start()
     try:
         result = await func(*args, **kwargs)
     except Exception:
         raise
     finally:
-        animation.cancel()
+        signal.done = True
+        animation.join()
     return result
 
 def _sync_supervisor(func, animation_, step, msg, *args, **kwargs):
@@ -71,7 +74,7 @@ def _sync_supervisor(func, animation_, step, msg, *args, **kwargs):
         Any exception that is thrown when executing func.
     """
     signal = Signal()
-    animation = threading.Thread(target=sync_animation,
+    animation = threading.Thread(target=animate_cli,
                                  args=(animation_, step, msg, signal))
     animation.start()
     try:

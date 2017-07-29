@@ -47,10 +47,8 @@ def arrow(size=5):
         _>__
         __>_
         ___>
-        ___<
         __<_
         _<__
-        <___
 
     Args:
         char (str): A single character, the character to make up the animation.
@@ -76,6 +74,6 @@ def raise_value_error_if_size_is_too_small(size, limit=1):
     Raises:
         sizeError
     """
-    if size < limit:
+    if size <= limit:
         raise ValueError("Argument 'size' must be greater than {}"
                          .format(str(limit)))

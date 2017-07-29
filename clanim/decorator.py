@@ -11,7 +11,7 @@ import daiquiri
 from .animation import arrow
 from .util import get_supervisor
 
-daiquiri.setup(level=logging.INFO)
+daiquiri.setup(level=logging.WARNING)
 LOGGER = daiquiri.getLogger(__name__)
 
 class Animate:
@@ -83,10 +83,10 @@ class Animate:
             return get_supervisor(func)(animation_, step, msg, *args, **kwargs)
         return wrapper
 
-    def __call__(self, func=None):
+    def __call__(self, func=None, *args, **kwargs):
         """Make the class instance callable.
-        
-        func (function): If the 
+
+        func (function): If the
         """
         LOGGER.info(f'Passing through __call__, calling {self._call}')
-        return self._call(func) if func else self._call()
+        return self._call(func, *args, **kwargs) if func else self._call()
