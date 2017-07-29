@@ -44,7 +44,7 @@ def sync_animation(animation_cycle, step, msg, signal):
         erase(status)
     erase(status)
 
-async def await_sleep_and_continue_unless_cancelled(sleep_time):
+async def _try_await_sleep(sleep_time):
     """Await an async sleep and check for a CancelledError.
 
     Args:
@@ -68,7 +68,7 @@ async def async_animation(animation_cycle, step, msg):
         step (float): Seconds between each animation frame.
         msg (str): A message to display.
     """
-    while await await_sleep_and_continue_unless_cancelled(step):
+    while await _try_await_sleep(step):
         frame = next(animation_cycle)
         status = ''.join(frame) + ' ' + msg
         sys.stdout.write(status)

@@ -61,9 +61,8 @@ def arrow(size=5):
     """
     raise_value_error_if_size_is_too_small(size)
     padding = size - 1
-    # TODO Optimize, taking the set of the permutaitons is ridiculously heavy
-    right_arrows = reversed(sorted(set(itertools.permutations('>' + ' '*padding))))
-    left_arrows = sorted(set(itertools.permutations('<' + ' '*padding)))
+    right_arrows = (' '*i + '>' + ' '*(padding - i) for i in range(padding))
+    left_arrows = (' '*(padding - i) + '<' + ' '*i for i in range(padding))
     return itertools.cycle(itertools.chain(right_arrows, left_arrows))
 
 def raise_value_error_if_size_is_too_small(size, limit=1):
@@ -78,5 +77,5 @@ def raise_value_error_if_size_is_too_small(size, limit=1):
         sizeError
     """
     if size < limit:
-        raise ValueError("Argument 'size' must be greater than "
-                         "{}".format(str(limit)))
+        raise ValueError("Argument 'size' must be greater than {}"
+                         .format(str(limit)))
