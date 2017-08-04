@@ -13,13 +13,13 @@ required = ['daiquiri']
 
 setup(
     name='clanim',
-    version='0.1.0',
+    version='0.1.3',
     description=('Function decorators that cause a command line animation to be run for the duration of the function.'),
     long_description=readme,
     author='Simon Larsén',
     author_email='slarse@kth.se',
     url='https://github.com/slarse/clanim',
-    download_url='https://github.com/slarse/clanim/archive/v0.1.0.tar.gz',
+    download_url='https://github.com/slarse/clanim/archive/v0.1.3.tar.gz',
     license=license,
     packages=find_packages(exclude=('tests', 'docs')),
     tests_require=test_requirements,
