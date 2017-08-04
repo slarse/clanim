@@ -3,14 +3,26 @@ Documentation for pdfebc-web
 
 .. automodule:: clanim
 
-factory
+decorator
 ====================
 
-.. automodule:: clanim.factory
+.. automodule:: clanim.decorator
     :members:
 
-main.views
+animation
 ====================
 
-.. automodule:: clanim.main.views
+.. automodule:: clanim.animation
+    :members:
+
+util
+====================
+
+.. automodule:: clanim.util
+    :members:
+
+cli
+====================
+
+.. automodule:: clanim.cli
     :members:

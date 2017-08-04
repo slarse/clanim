@@ -24,7 +24,7 @@ class Animate:
     If no argument is given, the 'arrow' animation is selected by default.
     """
 
-    def __init__(self, func=None, *, animation=arrow(), msg='Working ...', step=.1):
+    def __init__(self, func=None, *, animation=arrow(), msg='Working ', step=.1):
         """Constructor.
 
         Args:

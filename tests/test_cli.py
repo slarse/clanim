@@ -41,4 +41,4 @@ class CliTest(asynctest.TestCase):
         mock_erase.assert_called()
         mock_flush.assert_called()
         animation_mock.__next__.assert_called()
-        mock_write.assert_any_call(''.join(char) + ' ' + msg)
+        mock_write.assert_any_call(msg + char)
