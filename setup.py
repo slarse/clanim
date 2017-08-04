@@ -24,7 +24,6 @@ setup(
     packages=find_packages(exclude=('tests', 'docs')),
     tests_require=test_requirements,
     install_requires=required,
-    scripts=['bin/clanim'],
     include_package_data=True,
     zip_safe=False
 )
