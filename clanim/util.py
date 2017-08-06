@@ -8,8 +8,15 @@
 """
 import asyncio
 import functools
+import itertools
 import threading
 from .cli import animate_cli
+
+BACKSPACE = '\x08'
+BACKLINE = '\033[F'
+
+BACKSPACE_GEN = lambda size: itertools.cycle([BACKSPACE*size])
+BACKLINE_GEN = lambda lines: itertools.cycle(['\033[F'*(lines-1)])
 
 class Signal:
     """A wrapper for a boolean value used to signal the end of a thread's
@@ -85,3 +92,27 @@ def _sync_supervisor(func, animation_, step, msg, *args, **kwargs):
         signal.done = True
         animation.join()
     return result
+
+def concatechain(*generators, separator=''):
+    """Create generator that in each iteration takes one value from each of the
+    supplied generators, adds them togeter in-place (so the values yielded must
+    suport __iadd__) and yields the result. Stops as soon as any iterator
+    raises StopIteration and returns the value contained in it.
+
+    Primarily created for concatenating strings, hence the name.
+
+    Args:
+        generators (List[generator]): A list
+        separator (str): A separator to insert between each value yielded by
+        the different generators.
+    Returns:
+        A generator as described above.
+    """
+    while True:
+        try:
+            next_ = []
+            for gen in generators:
+                next_.append(next(gen))
+            yield separator.join(next_)
+        except StopIteration as e:
+            return e.value

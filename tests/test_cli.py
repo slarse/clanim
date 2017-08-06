@@ -18,10 +18,9 @@ class CliTest(asynctest.TestCase):
         cli.erase(msg)
         mock_write.assert_any_call('\x08'*len(msg))
 
-    @apatch('clanim.cli.erase')
     @apatch('sys.stdout.write')
     @apatch('sys.stdout.flush')
-    async def test_animate_cli(self, mock_flush, mock_write, mock_erase):
+    async def test_animate_cli(self, mock_flush, mock_write):
         signal = util.Signal()
         animation_mock = asynctest.MagicMock()
         char = '*'
@@ -33,12 +32,9 @@ class CliTest(asynctest.TestCase):
                                       args=(animation_mock, step, msg, signal))
             thread.start()
         # poll to see that the loop has run at least once
-        for _ in range(50):
-            time.sleep(.001)
-            if mock_erase.called:
-                break
+        time.sleep(.01)
         signal.done = True
-        mock_erase.assert_called()
         mock_flush.assert_called()
         animation_mock.__next__.assert_called()
-        mock_write.assert_any_call(msg + char)
+        mock_write.assert_any_call(msg + '\n')
+        mock_write.assert_any_call(char)

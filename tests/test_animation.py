@@ -29,25 +29,23 @@ class AnimationTest(unittest.TestCase):
     def test_char_wave_raises_with_too_small_size(self):
         values = [-100, -2, 0, 1]
         for val in values:
-            self.assertRaises(
-                ValueError,
-                animation.char_wave,
-                size=val)
+            with self.assertRaises(ValueError):
+                next(animation.char_wave(size=val))
 
     def test_char_wave_raises_with_empty_string(self):
-        self.assertRaises(ValueError,
-                          animation.char_wave,
-                          char='')
+        with self.assertRaises(ValueError):
+            next(animation.char_wave(char=''))
 
     def test_char_wave_raises_for_multiple_chars(self):
-        self.assertRaises(ValueError,
-                          animation.char_wave,
-                          char='##')
+        with self.assertRaises(ValueError):
+            next(animation.char_wave(char='##'))
 
     def test_char_wave_with_adequate_size(self):
         size = 3
         char = '#'
         expected_sequence = ['#  ', '## ', '###', '## ', '#  ']
+        for i in range(1, len(expected_sequence)):
+            expected_sequence[i] = '\x08'*size + expected_sequence[i]
         for expected, actual in zip(
                 expected_sequence, animation.char_wave(size=size)):
             self.assertEqual(expected, actual)
@@ -55,14 +53,15 @@ class AnimationTest(unittest.TestCase):
     def test_arrow_raises_with_too_small_size(self):
         values = [-100, -2, 0, 1]
         for val in values:
-            self.assertRaises(
-                ValueError,
-                animation.arrow,
-                size=val)
+            with self.assertRaises(ValueError):
+                gen = animation.arrow(size=val)
+                next(gen)
 
     def test_arrow_with_adequate_size(self):
         size = 3
         expected_sequence = ['>  ', ' > ', '  <', ' < ', '>  ']
+        for i in range(1, len(expected_sequence)):
+            expected_sequence[i] = '\x08'*size + expected_sequence[i]
         for expected, actual in zip(
                 expected_sequence, animation.arrow(size=size)):
             self.assertEqual(expected, actual)

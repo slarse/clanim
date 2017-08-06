@@ -29,11 +29,10 @@ def animate_cli(animation_, step, msg, signal):
         signal (Signal): An object that can be used to signal the thread to
         stop.
     """
+    sys.stdout.write(msg + '\n')
     while not signal.done:
         time.sleep(step)
         frame = next(animation_)
-        status = msg + ''.join(frame)
-        sys.stdout.write(status)
+        sys.stdout.write(frame)
         sys.stdout.flush()
-        erase(status)
-    erase(status)
+    animation_.reset()
