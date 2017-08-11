@@ -39,6 +39,6 @@ def animate_cli(animation_, step, msg, signal):
         frame = next(animation_)
         sys.stdout.write(frame)
         sys.stdout.flush()
-    sys.stdout.write(BACKLINE)
+    sys.stdout.write(animation_.get_erase_frame())
     sys.stdout.flush()
     animation_.reset()

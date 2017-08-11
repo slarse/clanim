@@ -7,38 +7,69 @@
 """
 import itertools
 import functools
-import abc
-import sys
-from .util import concatechain, BACKSPACE_GEN, BACKLINE_GEN
+from .util import concatechain, BACKSPACE_GEN, BACKLINE_GEN, BACKSPACE, BACKLINE
 from .alnum import big_message
 
 class Animation:
     """A wrapper class for animation generators making them resettable."""
     def __init__(self, animation_func, current_generator=None,
-                 animation_args=None, animation_kwargs=None):
+                 back_up_generator=None, animation_args=None,
+                 animation_kwargs=None):
         self._animation_func = animation_func
         self._current_generator = current_generator
+        self._back_up_generator = back_up_generator
         self._animation_args = animation_args
         self._animation_kwargs = animation_kwargs
+        self._current_frame = ""
         functools.update_wrapper(self, self._animation_func)
 
     def reset(self):
         """Reset the current animation generator."""
-        self._current_generator = self._animation_func(
+        animation_gen = self._animation_func(
             *self._animation_args, **self._animation_kwargs)
+        self._current_generator = itertools.cycle(
+            concatechain(animation_gen, self._back_up_generator))
+
+    def get_erase_frame(self):
+        """Return a frame that completely erases the current frame, and then
+        backs up.
+
+        Assumes that the current frame is of constant width."""
+        lines = self._current_frame.split('\n')
+        width = len(lines[0])
+        height = len(lines)
+        line = ' '*width
+        if height == 1:
+            frame = line + BACKSPACE*width
+        else:
+            frame = '\n'.join([line]*height) + BACKLINE*(height - 1)
+        return frame
 
     def __next__(self):
-        return next(self._current_generator)
+        self._current_frame = next(self._current_generator)
+        return self._current_frame
 
     def __call__(self, *args, **kwargs):
         cls = self.__class__
         self._animation_args = args
         self._animation_kwargs = kwargs
+        self._back_up_generator = _backed_up_animation_gen(self._animation_func,
+                                                           *args, **kwargs)
         self.reset()
-        return cls(self._animation_func, self._current_generator, args, kwargs)
+        return cls(self._animation_func, self._current_generator,
+                   self._back_up_generator, args, kwargs)
 
     def __iter__(self):
         return iter(self._current_generator)
+
+def _backed_up_animation_gen(animation_func, *args, **kwargs):
+    lines = next(animation_func(*args, **kwargs)).split('\n')
+    width = len(lines[0])
+    height = len(lines)
+    if height == 1:
+        return BACKSPACE_GEN(width)
+    else:
+        return BACKLINE_GEN(height)
 
 def _backspaced_single_line_animation(animation, *args, **kwargs):
     """Turn an animation into an automatically backspaced animation.
@@ -57,7 +88,8 @@ def _backspaced_single_line_animation(animation, *args, **kwargs):
     yield from concatechain(BACKSPACE_GEN(kwargs['size']), animation_gen)
 
 
-def _single_line_char_wave(char='#', size=10):
+@Animation
+def char_wave(char='#', size=10):
     """Create a generator that cycles a wave of the given char. The animation is
     padded with whitespace to make its width constant. As an example if the char
     given is '#', and the size is 4, then the animation will look like this
@@ -89,35 +121,7 @@ def _single_line_char_wave(char='#', size=10):
     return itertools.cycle(wave)
 
 @Animation
-def char_wave(char='#', size=10):
-    """Create a generator that cycles a wave of the given char. The animation is
-    padded with whitespace to make its width constant. As an example if the char
-    given is '#', and the size is 4, then the animation will look like this
-    (note that underscores signify whitespace):
-        #___
-        ##__
-        ###_
-        ####
-        ###_
-        ##__
-        #___
-
-    Backspaces are applied automatically, so the intended use for this is to
-    simply write each value yielded to stdout, which will produce an animation.
-
-    Args:
-        char (str): A single character, the character to make up the animation.
-        size (int): Total width of the animation (this is constant). This must
-        be greater than 1.
-    Returns:
-        generator: A generator that cycles the animation forever.
-    Raises:
-        ValueError
-    """
-    return _backspaced_single_line_animation(_single_line_char_wave,
-                                             char=char, size=size)
-
-def _single_line_arrow(size=5):
+def arrow(size=5):
     """Create a generator that cycles an arrow moving back and forth. The
     animation is padded with whitespace to make the width constant. As an
     example, if the width is 4, the animation looks like this (note that
@@ -141,30 +145,6 @@ def _single_line_arrow(size=5):
     left_arrows = (' '*(padding - i) + '<' + ' '*i for i in range(padding))
     return itertools.cycle(itertools.chain(right_arrows, left_arrows))
 
-@Animation
-def arrow(size=5):
-    """Create a generator that cycles an arrow moving back and forth. The
-    animation is padded with whitespace to make the width constant. As an
-    example, if the width is 4, the animation looks like this (note that
-    underscores signify whitespace):
-        >___
-        _>__
-        __>_
-        ___>
-        __<_
-        _<__
-
-    Backspaces are applied automatically, so the intended use for this is to
-    simply write each value yielded to stdout, which will produce an animation.
-
-    Args:
-        size (int): Total width of the animation (this is constant). This must
-        be greater than 1.
-    Returns:
-        generator: A generator that cycles the animation forever.
-    """
-    return _backspaced_single_line_animation(_single_line_arrow, size=size)
-
 def _multi_line_animation(lines, animation_, *args, **kwargs):
     """Take any of the _single_line_<animatno> and turn them into multi line
     animations!
@@ -176,14 +156,12 @@ def _multi_line_animation(lines, animation_, *args, **kwargs):
         kwargs (dict): Keyword arguments for the animation function.
     """
     animations = []
-    back_up_string_gen = itertools.cycle(['\033[F'*(lines - 1)])
     for i in range(lines):
         animations.append(animation_(*args, **kwargs))
         for _ in range(i): # advance spinners
             next(animations[i])
     animation_gen = concatechain(*animations, separator='\n')
-    yield next(animation_gen)
-    yield from concatechain(back_up_string_gen, animation_gen)
+    yield from animation_gen
 
 @Animation
 def char_waves(char='#', size=10, lines=3):
@@ -196,7 +174,7 @@ def char_waves(char='#', size=10, lines=3):
     Returns:
         generator: A generator that cycles a multi-line animation forever.
     """
-    return _multi_line_animation(lines, _single_line_char_wave, size=size, char=char)
+    return _multi_line_animation(lines, char_wave, size=size, char=char)
 
 @Animation
 def arrows(size=10, lines=3):
@@ -208,7 +186,7 @@ def arrows(size=10, lines=3):
     Returns:
         generator: A generator that cycles a multi-line animation forever.
     """
-    return _multi_line_animation(lines, _single_line_arrow, size=size)
+    return _multi_line_animation(lines, arrow, size=size)
 
 @Animation
 def spinners(size=10, lines=3):
@@ -220,9 +198,10 @@ def spinners(size=10, lines=3):
     Returns:
         generator: A generator that cycles a multi-line animation forever.
     """
-    return _multi_line_animation(lines, _single_line_spinner, size=size)
+    return _multi_line_animation(lines, spinner, size=size)
         
-def _single_line_spinner(size=10):
+@Animation
+def spinner(size=10):
     r"""Create a generator that yields strings for a spinner animation. The
     strings are padded with whitespace to make the width constant. A spinner
     of size 4 will look like this:
@@ -255,40 +234,8 @@ def _single_line_spinner(size=10):
         yield frame
 
 @Animation
-def spinner(size=10):
-    r"""Create a generator that yields strings for a spinner animation. The
-    strings are padded with whitespace to make the width constant. A spinner
-    of size 4 will look like this:
-        \___
-        |___
-        /___
-        -___
-        _\__
-        _|__
-        _/__
-        _-__
-        __\_
-        __|_
-        __/_
-        __-_
-        ___\
-
-    Backspaces are applied automatically, so the intended use for this is to
-    simply write each value yielded to stdout, which will produce an animation.
-
-    Args:
-        size (int): The width of the animation.
-    Returns:
-        generator: An animation generator with backspaces applied.
-    """
-    return _backspaced_single_line_animation(_single_line_spinner, size=size)
-
-@Animation
 def scrolling_text(msg, width=50):
-    msg_gen = big_message(msg, width=width)
-    back_up_gen = BACKLINE_GEN(5)
-    animation_gen = concatechain(msg_gen, back_up_gen)
-    yield from itertools.cycle(animation_gen)
+    yield from big_message(msg, width=width)
 
 def raise_value_error_if_size_is_too_small(size, limit=1):
     """Raise size error if the size is less than the limit.

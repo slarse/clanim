@@ -25,6 +25,7 @@ class CliTest(asynctest.TestCase):
         animation_mock = asynctest.MagicMock()
         char = '*'
         animation_mock.__next__ = asynctest.MagicMock(return_value=char)
+        animation_mock.get_erase_frame = asynctest.MagicMock(return_value='')
         step = .1
         msg = 'This is a message'
         with apatch('time.sleep'):

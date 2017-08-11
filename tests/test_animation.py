@@ -44,8 +44,8 @@ class AnimationTest(unittest.TestCase):
         size = 3
         char = '#'
         expected_sequence = ['#  ', '## ', '###', '## ', '#  ']
-        for i in range(1, len(expected_sequence)):
-            expected_sequence[i] = '\x08'*size + expected_sequence[i]
+        for i in range(0, len(expected_sequence)):
+            expected_sequence[i] =  expected_sequence[i] + '\x08'*size
         for expected, actual in zip(
                 expected_sequence, animation.char_wave(size=size)):
             self.assertEqual(expected, actual)
@@ -60,8 +60,8 @@ class AnimationTest(unittest.TestCase):
     def test_arrow_with_adequate_size(self):
         size = 3
         expected_sequence = ['>  ', ' > ', '  <', ' < ', '>  ']
-        for i in range(1, len(expected_sequence)):
-            expected_sequence[i] = '\x08'*size + expected_sequence[i]
+        for i in range(0, len(expected_sequence)):
+            expected_sequence[i] =  expected_sequence[i] + '\x08'*size
         for expected, actual in zip(
                 expected_sequence, animation.arrow(size=size)):
             self.assertEqual(expected, actual)
