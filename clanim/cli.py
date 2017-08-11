@@ -8,6 +8,9 @@
 import sys
 import time
 
+BACKSPACE = '\x08'
+BACKLINE = '\033[F'
+
 def erase(status):
     """Erases the given status message from stdout by backspacing as many times
     as the status is long.
@@ -29,10 +32,13 @@ def animate_cli(animation_, step, msg, signal):
         signal (Signal): An object that can be used to signal the thread to
         stop.
     """
-    sys.stdout.write(msg + '\n')
+    if msg:
+        sys.stdout.write(msg + '\n')
     while not signal.done:
         time.sleep(step)
         frame = next(animation_)
         sys.stdout.write(frame)
         sys.stdout.flush()
+    sys.stdout.write(BACKLINE)
+    sys.stdout.flush()
     animation_.reset()

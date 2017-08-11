@@ -9,30 +9,33 @@ import itertools
 import functools
 import abc
 import sys
-from .util import concatechain, BACKSPACE_GEN
+from .util import concatechain, BACKSPACE_GEN, BACKLINE_GEN
+from .alnum import big_message
 
 class Animation:
     """A wrapper class for animation generators making them resettable."""
-    def __init__(self, animation_func):
+    def __init__(self, animation_func, current_generator=None,
+                 animation_args=None, animation_kwargs=None):
         self._animation_func = animation_func
-        self._current_generator = None 
-        self._animation_args = None
-        self._animation_kwargs = None
+        self._current_generator = current_generator
+        self._animation_args = animation_args
+        self._animation_kwargs = animation_kwargs
         functools.update_wrapper(self, self._animation_func)
 
     def reset(self):
         """Reset the current animation generator."""
         self._current_generator = self._animation_func(
             *self._animation_args, **self._animation_kwargs)
-        
+
     def __next__(self):
         return next(self._current_generator)
 
     def __call__(self, *args, **kwargs):
+        cls = self.__class__
         self._animation_args = args
         self._animation_kwargs = kwargs
         self.reset()
-        return self
+        return cls(self._animation_func, self._current_generator, args, kwargs)
 
     def __iter__(self):
         return iter(self._current_generator)
@@ -251,6 +254,7 @@ def _single_line_spinner(size=10):
         spinner_pos = (spinner_pos + 1) % (size*4)
         yield frame
 
+@Animation
 def spinner(size=10):
     r"""Create a generator that yields strings for a spinner animation. The
     strings are padded with whitespace to make the width constant. A spinner
@@ -278,6 +282,13 @@ def spinner(size=10):
         generator: An animation generator with backspaces applied.
     """
     return _backspaced_single_line_animation(_single_line_spinner, size=size)
+
+@Animation
+def scrolling_text(msg, width=50):
+    msg_gen = big_message(msg, width=width)
+    back_up_gen = BACKLINE_GEN(5)
+    animation_gen = concatechain(msg_gen, back_up_gen)
+    yield from itertools.cycle(animation_gen)
 
 def raise_value_error_if_size_is_too_small(size, limit=1):
     """Raise size error if the size is less than the limit.

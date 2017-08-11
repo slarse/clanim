@@ -10,10 +10,7 @@ import asyncio
 import functools
 import itertools
 import threading
-from .cli import animate_cli
-
-BACKSPACE = '\x08'
-BACKLINE = '\033[F'
+from .cli import animate_cli, BACKLINE, BACKSPACE
 
 BACKSPACE_GEN = lambda size: itertools.cycle([BACKSPACE*size])
 BACKLINE_GEN = lambda lines: itertools.cycle(['\033[F'*(lines-1)])

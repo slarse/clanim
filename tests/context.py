@@ -7,3 +7,5 @@ import clanim.animation
 import clanim.decorator
 import clanim.util
 import clanim.cli
+import clanim.big_char
+import clanim.alnum
