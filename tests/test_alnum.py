@@ -8,7 +8,6 @@
 Author: Simon Larsén
 """
 import unittest
-from unittest.mock import MagicMock, Mock, patch
 from .context import clanim
 from clanim import alnum
 
