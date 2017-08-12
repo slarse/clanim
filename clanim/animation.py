@@ -99,14 +99,14 @@ def _backspaced_single_line_animation(animation, *args, **kwargs):
     """
     animation_gen = animation(*args, **kwargs)
     yield next(animation_gen)
-    yield from concatechain(BACKSPACE_GEN(kwargs['size']), animation_gen)
+    yield from concatechain(BACKSPACE_GEN(kwargs['width']), animation_gen)
 
 
 @_Animation
-def char_wave(char='#', size=10):
+def char_wave(char='#', width=10):
     """Create a generator that cycles a wave of the given char. The animation is
     padded with whitespace to make its width constant. As an example if the char
-    given is '#', and the size is 4, then the animation will look like this
+    given is '#', and the width is 4, then the animation will look like this
     (note that underscores signify whitespace):
         #___
         ##__
@@ -118,7 +118,7 @@ def char_wave(char='#', size=10):
 
     Args:
         char (str): A single character, the character to make up the animation.
-        size (int): Total width of the animation (this is constant). This must
+        width (int): Total width of the animation (this is constant). This must
         be greater than 1.
     Returns:
         generator: A generator that cycles the animation forever.
@@ -128,14 +128,14 @@ def char_wave(char='#', size=10):
     if len(char) != 1:
         raise ValueError("The argument 'char' must be a single character, and "
                          "not a string of length {}".format(len(char)))
-    raise_value_error_if_size_is_too_small(size)
-    increasing = ((char*n).ljust(size) for n in range(1, size))
-    decreasing = ((char*n).ljust(size) for n in range(size, 1, -1))
+    raise_value_error_if_width_is_too_small(width)
+    increasing = ((char*n).ljust(width) for n in range(1, width))
+    decreasing = ((char*n).ljust(width) for n in range(width, 1, -1))
     wave = itertools.chain(increasing, decreasing)
     return itertools.cycle(wave)
 
 @_Animation
-def arrow(size=5):
+def arrow(width=5):
     """Create a generator that cycles an arrow moving back and forth. The
     animation is padded with whitespace to make the width constant. As an
     example, if the width is 4, the animation looks like this (note that
@@ -148,13 +148,13 @@ def arrow(size=5):
         _<__
 
     Args:
-        size (int): Total width of the animation (this is constant). This must
+        width (int): Total width of the animation (this is constant). This must
         be greater than 1.
     Returns:
         generator: A generator that cycles the animation forever.
     """
-    raise_value_error_if_size_is_too_small(size)
-    padding = size - 1
+    raise_value_error_if_width_is_too_small(width)
+    padding = width - 1
     right_arrows = (' '*i + '>' + ' '*(padding - i) for i in range(padding))
     left_arrows = (' '*(padding - i) + '<' + ' '*i for i in range(padding))
     return itertools.cycle(itertools.chain(right_arrows, left_arrows))
@@ -178,47 +178,47 @@ def _multi_line_animation(lines, animation_, *args, **kwargs):
     yield from animation_gen
 
 @_Animation
-def char_waves(char='#', size=10, lines=3):
+def char_waves(char='#', width=10, lines=3):
     """Multi line version of the char_wave animation.
 
     Args:
         char (str): The character.
-        size (int): The width of the animation.
+        width (int): The width of the animation.
         lines (int): The height of the animation.
     Returns:
         generator: A generator that cycles a multi-line animation forever.
     """
-    return _multi_line_animation(lines, char_wave, size=size, char=char)
+    return _multi_line_animation(lines, char_wave, width=width, char=char)
 
 @_Animation
-def arrows(size=10, lines=3):
+def arrows(width=10, lines=3):
     """Multi line version of the arrow animation.
 
     Args:
-        size (int): The width of the animation.
+        width (int): The width of the animation.
         lines (int): The height of the animation.
     Returns:
         generator: A generator that cycles a multi-line animation forever.
     """
-    return _multi_line_animation(lines, arrow, size=size)
+    return _multi_line_animation(lines, arrow, width=width)
 
 @_Animation
-def spinners(size=10, lines=3):
+def spinners(width=10, lines=3):
     """Multi line version of the spinner animation.
-    
+
     Args:
-        size (int): The width of the animation.
+        width (int): The width of the animation.
         lines (int): The height of the animation.
     Returns:
         generator: A generator that cycles a multi-line animation forever.
     """
-    return _multi_line_animation(lines, spinner, size=size)
-        
+    return _multi_line_animation(lines, spinner, width=width)
+
 @_Animation
-def spinner(size=10):
+def spinner(width=10):
     r"""Create a generator that yields strings for a spinner animation. The
     strings are padded with whitespace to make the width constant. A spinner
-    of size 4 will look like this:
+    of width 4 will look like this:
         \___
         |___
         /___
@@ -234,34 +234,41 @@ def spinner(size=10):
         ___\
 
     Args:
-        size (int): The width of the animation.
+        width (int): The width of the animation.
     """
-    raise_value_error_if_size_is_too_small(size, limit=0)
+    raise_value_error_if_width_is_too_small(width, limit=0)
     spinner_ = itertools.cycle(['\\', '|', '/', '-'])
     spinner_pos = 0
-    padding = size - 1
+    padding = width - 1
     while True:
         left_padding = ' '*(spinner_pos//4)
         right_padding = ' '*(padding - spinner_pos//4)
         frame = left_padding + next(spinner_) + right_padding
-        spinner_pos = (spinner_pos + 1) % (size*4)
+        spinner_pos = (spinner_pos + 1) % (width*4)
         yield frame
 
 @_Animation
 def scrolling_text(msg, width=50):
-    yield from big_message(msg, width=width)
-
-def raise_value_error_if_size_is_too_small(size, limit=1):
-    """Raise size error if the size is less than the limit.
+    """Animates the given message with big, friendly scrolling characters that
+    are 5x5 cells large.
 
     Args:
-        size: Any size that is orderable, but must be of the same type as
-        limit.
-        limit: Any size that is orderable, but must be of the same type
-        as size.
-    Raises:
-        sizeError
+        msg (str): The message to animate.
+        width (int): Width (in cells) of the animation.
     """
-    if size <= limit:
-        raise ValueError("Argument 'size' must be greater than {}"
+    yield from big_message(msg, width=width)
+
+def raise_value_error_if_width_is_too_small(width, limit=1):
+    """Raise width error if the width is less than the limit.
+
+    Args:
+        width: Any width that is orderable, but must be of the same type as
+        limit.
+        limit: Any width that is orderable, but must be of the same type
+        as width.
+    Raises:
+        ValueError
+    """
+    if width <= limit:
+        raise ValueError("Argument 'width' must be greater than {}"
                          .format(str(limit)))
