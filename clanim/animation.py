@@ -12,7 +12,7 @@ from .alnum import big_message
 
 class _Animation:
     """A wrapper class for animation generators making them resettable.
-    
+
     This class is only to be used internally in the clanim package!"""
     def __init__(self, animation_func, current_generator=None,
                  back_up_generator=None, animation_args=None,
@@ -55,8 +55,8 @@ class _Animation:
         cls = self.__class__
         self._animation_args = args
         self._animation_kwargs = kwargs
-        self._back_up_generator = _backed_up_animation_gen(self._animation_func,
-                                                           *args, **kwargs)
+        self._back_up_generator = _get_back_up_generator(self._animation_func,
+                                                         *args, **kwargs)
         self.reset()
         return cls(self._animation_func, self._current_generator,
                    self._back_up_generator, args, kwargs)
@@ -64,7 +64,19 @@ class _Animation:
     def __iter__(self):
         return iter(self._current_generator)
 
-def _backed_up_animation_gen(animation_func, *args, **kwargs):
+def _get_back_up_generator(animation_func, *args, **kwargs):
+    """Create a generator for the provided animation function that backs up
+    the cursor after a frame. Assumes that the animation function provides
+    a generator that yields strings of constant width and height.
+
+    Args:
+        animation_func (function): A function that returns an animation generator.
+        args (tuple): Arguments for animation_func.
+        kwargs (dict): Keyword arguments for animation_func.
+    Returns:
+        generator: A generator that generates backspace/backline characters for
+        the animation func generator.
+    """
     lines = next(animation_func(*args, **kwargs)).split('\n')
     width = len(lines[0])
     height = len(lines)
