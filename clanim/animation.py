@@ -2,7 +2,7 @@
 """
 .. module: animation
     :platform: Unix
-    :synopsis: Animation decorators.
+    :synopsis: _Animation decorators.
 .. moduleauthor:: Simon Larsén <slarse@kth.se>
 """
 import itertools
@@ -10,8 +10,10 @@ import functools
 from .util import concatechain, BACKSPACE_GEN, BACKLINE_GEN, BACKSPACE, BACKLINE
 from .alnum import big_message
 
-class Animation:
-    """A wrapper class for animation generators making them resettable."""
+class _Animation:
+    """A wrapper class for animation generators making them resettable.
+    
+    This class is only to be used internally in the clanim package!"""
     def __init__(self, animation_func, current_generator=None,
                  back_up_generator=None, animation_args=None,
                  animation_kwargs=None):
@@ -88,7 +90,7 @@ def _backspaced_single_line_animation(animation, *args, **kwargs):
     yield from concatechain(BACKSPACE_GEN(kwargs['size']), animation_gen)
 
 
-@Animation
+@_Animation
 def char_wave(char='#', size=10):
     """Create a generator that cycles a wave of the given char. The animation is
     padded with whitespace to make its width constant. As an example if the char
@@ -120,7 +122,7 @@ def char_wave(char='#', size=10):
     wave = itertools.chain(increasing, decreasing)
     return itertools.cycle(wave)
 
-@Animation
+@_Animation
 def arrow(size=5):
     """Create a generator that cycles an arrow moving back and forth. The
     animation is padded with whitespace to make the width constant. As an
@@ -163,7 +165,7 @@ def _multi_line_animation(lines, animation_, *args, **kwargs):
     animation_gen = concatechain(*animations, separator='\n')
     yield from animation_gen
 
-@Animation
+@_Animation
 def char_waves(char='#', size=10, lines=3):
     """Multi line version of the char_wave animation.
 
@@ -176,7 +178,7 @@ def char_waves(char='#', size=10, lines=3):
     """
     return _multi_line_animation(lines, char_wave, size=size, char=char)
 
-@Animation
+@_Animation
 def arrows(size=10, lines=3):
     """Multi line version of the arrow animation.
 
@@ -188,7 +190,7 @@ def arrows(size=10, lines=3):
     """
     return _multi_line_animation(lines, arrow, size=size)
 
-@Animation
+@_Animation
 def spinners(size=10, lines=3):
     """Multi line version of the spinner animation.
     
@@ -200,7 +202,7 @@ def spinners(size=10, lines=3):
     """
     return _multi_line_animation(lines, spinner, size=size)
         
-@Animation
+@_Animation
 def spinner(size=10):
     r"""Create a generator that yields strings for a spinner animation. The
     strings are padded with whitespace to make the width constant. A spinner
@@ -233,7 +235,7 @@ def spinner(size=10):
         spinner_pos = (spinner_pos + 1) % (size*4)
         yield frame
 
-@Animation
+@_Animation
 def scrolling_text(msg, width=50):
     yield from big_message(msg, width=width)
 
