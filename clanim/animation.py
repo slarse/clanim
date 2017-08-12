@@ -11,9 +11,12 @@ from .util import concatechain, BACKSPACE_GEN, BACKLINE_GEN, BACKSPACE, BACKLINE
 from .alnum import big_message
 
 class _Animation:
-    """A wrapper class for animation generators making them resettable.
+    """A wrapper class for animation generators. It automatically backs up
+    the cursor after each frame, and provides reset and erase functionality.
 
-    This class is only to be used internally in the clanim package!"""
+    Should only ever be used internally in the clanim package, and only
+    as an argumentless decorator.
+    """
     def __init__(self, animation_func, current_generator=None,
                  back_up_generator=None, animation_args=None,
                  animation_kwargs=None):
