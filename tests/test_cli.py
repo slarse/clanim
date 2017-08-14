@@ -27,15 +27,13 @@ class CliTest(asynctest.TestCase):
         animation_mock.__next__ = asynctest.MagicMock(return_value=char)
         animation_mock.get_erase_frame = asynctest.MagicMock(return_value='')
         step = .1
-        msg = 'This is a message'
         with apatch('time.sleep'):
             thread = threading.Thread(target=cli.animate_cli,
-                                      args=(animation_mock, step, msg, signal))
+                                      args=(animation_mock, step, signal))
             thread.start()
         # poll to see that the loop has run at least once
         time.sleep(.01)
         signal.done = True
         mock_flush.assert_called()
         animation_mock.__next__.assert_called()
-        mock_write.assert_any_call(msg + '\n')
         mock_write.assert_any_call(char)

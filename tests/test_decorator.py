@@ -10,19 +10,19 @@ Author: Simon Larsén
 import unittest
 from unittest.mock import MagicMock, Mock, patch
 from .context import clanim
-from clanim.decorator import Animate
+from clanim.decorator import Animate, ANNOTATED
 
 def animate_test_variables():
     """Return the variables for the Animate tests."""
     return_value = 42**42
     mock_function = MagicMock(return_value=return_value)
+    setattr(mock_function, ANNOTATED, False)
     docstring = 'This is a test docstring'
     mock_function.__doc__ = docstring
     mock_animation = MagicMock()
     step = .1
-    msg = 'This is a test message'
-    animate = Animate(animation=mock_animation, step=step, msg=msg)
-    return mock_function, return_value, docstring, mock_animation, step, msg, animate
+    animate = Animate(animation=mock_animation, step=step)
+    return mock_function, return_value, docstring, mock_animation, step, animate
 
 
 class DecoratorTest(unittest.TestCase):
@@ -39,12 +39,12 @@ class DecoratorTest(unittest.TestCase):
         that the constructor is actually called on the kwargs, and
         not on the function that Animate decorates.
         """
-        mock_function, return_value, docstring, mock_animation, step, msg, animate = (
+        mock_function, return_value, docstring, mock_animation, step, animate = (
             animate_test_variables())
         wrapped_function = animate(mock_function)
         result = wrapped_function()
         mock_get_supervisor.assert_called_once_with(mock_function)
-        mock_function.assert_called_once_with(mock_animation, step, msg)
+        mock_function.assert_called_once_with(mock_animation, step)
         self.assertEqual(docstring, wrapped_function.__doc__)
         self.assertEqual(return_value, result)
 
@@ -53,12 +53,12 @@ class DecoratorTest(unittest.TestCase):
             self, mock_get_supervisor):
         args = ('herro', 2, lambda x: 2*x)
         kwargs = {'herro': 2, 'python': 42}
-        mock_function, return_value, docstring, mock_animation, step, msg, animate = (
+        mock_function, return_value, docstring, mock_animation, step, animate = (
             animate_test_variables())
         wrapped_function = animate(mock_function)
         result = wrapped_function(*args, **kwargs)
         mock_get_supervisor.assert_called_once_with(mock_function)
-        mock_function.assert_called_once_with(mock_animation, step, msg,
+        mock_function.assert_called_once_with(mock_animation, step,
                                               *args, **kwargs)
         self.assertEqual(docstring, wrapped_function.__doc__)
         self.assertEqual(return_value, result)
@@ -66,7 +66,7 @@ class DecoratorTest(unittest.TestCase):
     @patch('clanim.decorator.get_supervisor', side_effect=lambda func: func)
     def test_animate_without_constructor_kwargs(self, mock_get_supervisor):
         """Emulates decorating a function without calling the constructor explicitly."""
-        mock_function, return_value, docstring, _, _, _, _ = (
+        mock_function, return_value, docstring, _, _, _ = (
             animate_test_variables())
         wrapped_function = Animate(mock_function)
         result = wrapped_function()
@@ -80,7 +80,7 @@ class DecoratorTest(unittest.TestCase):
             self, mock_get_supervisor):
         args = ('herro', 2, lambda x: 2*x)
         kwargs = {'herro': 2, 'python': 42}
-        mock_function, return_value, docstring, _, _, _, _ = (
+        mock_function, return_value, docstring, _, _, _ = (
             animate_test_variables())
         wrapped_function = Animate(mock_function)
         result = wrapped_function(*args, **kwargs)
