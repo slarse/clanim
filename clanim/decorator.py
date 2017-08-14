@@ -11,8 +11,51 @@ import daiquiri
 from .animation import arrow
 from .util import get_supervisor
 
-daiquiri.setup(level=logging.WARNING)
+daiquiri.setup(level=logging.INFO)
 LOGGER = daiquiri.getLogger(__name__)
+
+ANNOTATED = '_clanim_annotated'
+
+class Annotate:
+    """A decorator meant for decorating functions that are decorated with the
+    Animation decorator. It prints a message to stdout before and/or after the
+    function has finished.
+
+    This decorator can also be used standalon, but you should NOT decorate a
+    function that is decorated with Animate with Annotate. That is to say,
+    the decorator order must be like this:
+
+        @Annotate
+        @Animate
+        def some_function()
+            pass
+    """
+    def __init__(self, before_msg, after_msg):
+        """
+        Args:
+            working_msg (str): A message to print before the function runs.
+            after_msg (str): A message to print after the function has finished.
+        """
+        self._before_msg = before_msg
+        self._after_msg = after_msg
+
+    def __call__(self, func, *args, **kwargs):
+        """
+        Args:
+            func (function): The annotated function.
+            args (tuple): Arguments for func.
+            kwrags (dict): Keyword arguments for func.
+        """
+        @functools.wraps(func)
+        def wrapper(*args, **kwargs):
+            if self._before_msg:
+                print(self._before_msg)
+            result = func(*args, **kwargs)
+            if self._after_msg:
+                print(self._after_msg)
+            return result
+        setattr(wrapper, ANNOTATED, True)
+        return wrapper
 
 class Animate:
     """A decorator class for adding a CLI animation to a slow-running funciton.
@@ -24,7 +67,7 @@ class Animate:
     If no argument is given, the 'arrow' animation is selected by default.
     """
 
-    def __init__(self, func=None, *, animation=arrow(), msg='Working ', step=.1):
+    def __init__(self, func=None, *, animation=arrow(), step=.1, msg=None):
         """Constructor.
 
         Args:
@@ -35,16 +78,19 @@ class Animate:
             msg (str): A message to display alongside the animation.
             step (float): Seconds between each animation frame.
         """
-        if callable(func):
-            self._call = functools.partial(self._call_without_kwargs, animation,
-                                           step, msg, func)
-            functools.update_wrapper(self, func)
-        elif func:
+        if func and not callable(func):
             raise TypeError("argument 'func' for {!r} must be "
                             "callable".format(self.__class__.__name__))
+        if callable(func):
+            self._raise_if_annotated(func)
+            partial = functools.partial(self._call_without_kwargs, animation,
+                                        step, msg, func)
+            functools.update_wrapper(self, func)
         else:
-            self._call = functools.partial(self._call_with_kwargs, animation,
-                                               step, msg)
+            partial = functools.partial(self._call_with_kwargs, animation,
+                                        step, msg)
+        self._call = partial
+        LOGGER.warning('End of constructor')
 
     def _call_without_kwargs(self, animation_, step, msg, func, *args, **kwargs):
         """The function that __call__ calls if the constructor did not recieve
@@ -78,6 +124,7 @@ class Animate:
             A function if func is a function, and a coroutine if func is a
             coroutine.
         """
+        self._raise_if_annotated(func)
         @functools.wraps(func)
         def wrapper(*args, **kwargs):
             return get_supervisor(func)(animation_, step, msg, *args, **kwargs)
@@ -90,3 +137,21 @@ class Animate:
         """
         LOGGER.info(f'Passing through __call__, calling {self._call}')
         return self._call(func, *args, **kwargs) if func else self._call()
+
+    def _raise_if_annotated(self, func):
+        """Raise TypeError if a function is decorated with Annotate, as such
+        functions cause visual bugs when decorated with Animate.
+
+        Animate should be wrapped by Annotate instead.
+
+        Args:
+            func (function): Any callable.
+        Raises:
+            TypeError
+        """
+        if hasattr(func, ANNOTATED):
+            msg = ('Functions decorated with {!r} '
+                   'should not be decorated with {!r}.\n'
+                   'Please reverse the order of the decorators!'
+                   .format(self.__class__.__name__, Annotate.__name__))
+            raise TypeError(msg)
