@@ -67,7 +67,7 @@ class Animate:
     If no argument is given, the 'arrow' animation is selected by default.
     """
 
-    def __init__(self, func=None, *, animation=arrow(), step=.1, msg=None):
+    def __init__(self, func=None, *, animation=arrow(), step=.1):
         """Constructor.
 
         Args:
@@ -75,7 +75,6 @@ class Animate:
             function it decorates is passed in here. Otherwise, this is None.
             This argument should NOT be given directly.
             animation (generator): A generator that yields strings for the animation.
-            msg (str): A message to display alongside the animation.
             step (float): Seconds between each animation frame.
         """
         if func and not callable(func):
@@ -84,15 +83,15 @@ class Animate:
         if callable(func):
             self._raise_if_annotated(func)
             partial = functools.partial(self._call_without_kwargs, animation,
-                                        step, msg, func)
+                                        step, func)
             functools.update_wrapper(self, func)
         else:
             partial = functools.partial(self._call_with_kwargs, animation,
-                                        step, msg)
+                                        step)
         self._call = partial
         LOGGER.warning('End of constructor')
 
-    def _call_without_kwargs(self, animation_, step, msg, func, *args, **kwargs):
+    def _call_without_kwargs(self, animation_, step, func, *args, **kwargs):
         """The function that __call__ calls if the constructor did not recieve
         any kwargs.
 
@@ -101,7 +100,6 @@ class Animate:
         Args:
             animation_ (generator): A generator yielding strings for the animation.
             step (float): Seconds between each animation frame.
-            msg (str): The message to be displayed next to the animation.
             func (function): A function to run alongside an animation.
             args (tuple): Positional arguments for func.
             kwargs (dict): Keyword arguments for func.
@@ -109,16 +107,15 @@ class Animate:
             A function if func is a function, and a coroutine if func is a
             coroutine.
         """
-        return get_supervisor(func)(animation_, step, msg, *args, **kwargs)
+        return get_supervisor(func)(animation_, step, *args, **kwargs)
 
-    def _call_with_kwargs(self, animation_, step, msg, func):
+    def _call_with_kwargs(self, animation_, step, func):
         """The function that __call__ calls when the constructor received kwargs.
 
         NOTE: This method should ONLY be called directly in the constructor!
 
         Args:
             animation_ (generator): A generator yielding strings for the animation.
-            msg (str): The message to be displayed next to the animation.
             func (function): A function to run alongside an animation.
         Returns:
             A function if func is a function, and a coroutine if func is a
@@ -127,7 +124,7 @@ class Animate:
         self._raise_if_annotated(func)
         @functools.wraps(func)
         def wrapper(*args, **kwargs):
-            return get_supervisor(func)(animation_, step, msg, *args, **kwargs)
+            return get_supervisor(func)(animation_, step, *args, **kwargs)
         return wrapper
 
     def __call__(self, func=None, *args, **kwargs):
@@ -149,7 +146,7 @@ class Animate:
         Raises:
             TypeError
         """
-        if hasattr(func, ANNOTATED):
+        if hasattr(func, ANNOTATED) and getattr(func, ANNOTATED):
             msg = ('Functions decorated with {!r} '
                    'should not be decorated with {!r}.\n'
                    'Please reverse the order of the decorators!'
