@@ -32,7 +32,7 @@ def get_supervisor(func):
         supervisor = _sync_supervisor
     return functools.partial(supervisor, func)
 
-async def _async_supervisor(func, animation_, step, msg, *args, **kwargs):
+async def _async_supervisor(func, animation_, step, *args, **kwargs):
     """Supervisor for running an animation with an asynchronous function.
 
     Args:
@@ -40,7 +40,6 @@ async def _async_supervisor(func, animation_, step, msg, *args, **kwargs):
         animation_ (generator): An infinite generator that produces
         strings for the animation.
         step (float): Seconds between each animation frame.
-        msg (str): The message to be displayed next to the animation.
         *args (tuple): Arguments for func.
         **kwargs (dict): Keyword arguments for func.
     Returns:
@@ -50,7 +49,7 @@ async def _async_supervisor(func, animation_, step, msg, *args, **kwargs):
     """
     signal = Signal()
     animation = threading.Thread(target=animate_cli,
-                                 args=(animation_, step, msg, signal))
+                                 args=(animation_, step, signal))
     animation.start()
     try:
         result = await func(*args, **kwargs)
@@ -61,7 +60,7 @@ async def _async_supervisor(func, animation_, step, msg, *args, **kwargs):
         animation.join()
     return result
 
-def _sync_supervisor(func, animation_, step, msg, *args, **kwargs):
+def _sync_supervisor(func, animation_, step, *args, **kwargs):
     """Supervisor for running an animation with a synchronous function.
 
     Args:
@@ -69,7 +68,6 @@ def _sync_supervisor(func, animation_, step, msg, *args, **kwargs):
         animation_ (generator): An infinite generator that produces
         strings for the animation.
         step (float): Seconds between each animation frame.
-        msg (str): The message to be displayed next to the animation.
         args (tuple): Arguments for func.
         kwargs (dict): Keyword arguments for func.
     Returns:
@@ -79,7 +77,7 @@ def _sync_supervisor(func, animation_, step, msg, *args, **kwargs):
     """
     signal = Signal()
     animation = threading.Thread(target=animate_cli,
-                                 args=(animation_, step, msg, signal))
+                                 args=(animation_, step, signal))
     animation.start()
     try:
         result = func(*args, **kwargs)
