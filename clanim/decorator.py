@@ -11,7 +11,7 @@ import daiquiri
 from .animation import arrow
 from .util import get_supervisor
 
-daiquiri.setup(level=logging.INFO)
+daiquiri.setup(level=logging.ERROR)
 LOGGER = daiquiri.getLogger(__name__)
 
 ANNOTATED = '_clanim_annotated'
@@ -89,7 +89,6 @@ class Animate:
             partial = functools.partial(self._call_with_kwargs, animation,
                                         step)
         self._call = partial
-        LOGGER.warning('End of constructor')
 
     def _call_without_kwargs(self, animation_, step, func, *args, **kwargs):
         """The function that __call__ calls if the constructor did not recieve
