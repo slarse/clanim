@@ -10,7 +10,7 @@ Author: Simon Larsén
 import unittest
 from unittest.mock import MagicMock, Mock, patch
 from .context import clanim
-from clanim import big_char
+from clanim.animation import big_char
 
 class BigCharTest(unittest.TestCase):
     def test_chars_are_correct_size(self):

@@ -8,7 +8,7 @@
 import logging
 import functools
 import daiquiri
-from .animation import arrow
+from .animation.singleline import arrow
 from .util import get_supervisor
 
 daiquiri.setup(level=logging.ERROR)
