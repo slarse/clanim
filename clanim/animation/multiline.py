@@ -11,41 +11,41 @@ from .alnum import big_message
 from ..util import concatechain
 
 @_Animation
-def char_waves(char='#', width=10, lines=3):
+def char_waves(char='#', width=10, height=3):
     """Multi line version of the char_wave animation.
 
     Args:
         char (str): The character.
         width (int): The width of the animation.
-        lines (int): The height of the animation.
+        height (int): The height of the animation.
     Returns:
         generator: A generator that cycles a multi-line animation forever.
     """
-    return _multi_line_animation(lines, char_wave, width=width, char=char)
+    return _multi_line_animation(height, char_wave, width=width, char=char)
 
 @_Animation
-def arrows(width=10, lines=3):
+def arrows(width=10, height=3):
     """Multi line version of the arrow animation.
 
     Args:
         width (int): The width of the animation.
-        lines (int): The height of the animation.
+        height (int): The height of the animation.
     Returns:
         generator: A generator that cycles a multi-line animation forever.
     """
-    return _multi_line_animation(lines, arrow, width=width)
+    return _multi_line_animation(height, arrow, width=width)
 
 @_Animation
-def spinners(width=10, lines=3):
+def spinners(width=10, height=3):
     """Multi line version of the spinner animation.
 
     Args:
         width (int): The width of the animation.
-        lines (int): The height of the animation.
+        height (int): The height of the animation.
     Returns:
         generator: A generator that cycles a multi-line animation forever.
     """
-    return _multi_line_animation(lines, spinner, width=width)
+    return _multi_line_animation(height, spinner, width=width)
 
 @_Animation
 def scrolling_text(msg, width=50):
@@ -60,17 +60,17 @@ def scrolling_text(msg, width=50):
     yield from big_message(msg, width=width)
 
 
-def _multi_line_animation(lines, animation_, *args, **kwargs):
+def _multi_line_animation(height, animation_, *args, **kwargs):
     """Take a single line animation and multiline it!
 
     Args:
-        lines (int): The amount of lines to animate.
+        height (int): The amount of lines to animate.
         animation_ (function): A function that returns an animation generator.
         args (tuple): Arguments for the animation function.
         kwargs (dict): Keyword arguments for the animation function.
     """
     animations = []
-    for i in range(lines):
+    for i in range(height):
         animations.append(animation_(*args, **kwargs))
         for _ in range(i): # advance animation
             next(animations[i])
