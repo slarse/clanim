@@ -31,10 +31,9 @@ def supervisor_test_variables(sync=True, raises=False):
     if raises:
         mock_function.side_effect = Exception
     mock_animation = Mock()
-    msg = 'This is a test message'
     step = .1
     signal = util.Signal()
-    return mock_function, return_value, mock_animation, msg, step, signal
+    return mock_function, return_value, mock_animation, step, signal
 
 class UtilTest(asynctest.TestCase):
 
@@ -58,78 +57,78 @@ class UtilTest(asynctest.TestCase):
 
     @apatch('clanim.util.animate_cli')
     async def test_sync_supervisor_with_noargs_function(self, mock_animate_cli):
-        mock_function, return_value, mock_animation, msg, step, signal = (
+        mock_function, return_value, mock_animation, step, signal = (
             supervisor_test_variables())
         with apatch('clanim.util.Signal', return_value=signal):
-            result = util._sync_supervisor(mock_function, mock_animation, step, msg)
-        mock_animate_cli.assert_called_once_with(mock_animation, step, msg, signal)
+            result = util._sync_supervisor(mock_function, mock_animation, step)
+        mock_animate_cli.assert_called_once_with(mock_animation, step, signal)
         mock_function.assert_called_once()
         self.assertEqual(return_value, result)
 
     @apatch('clanim.util.animate_cli')
     async def test_sync_supervisor_with_args_function(self, mock_animate_cli):
         args = ('herro', 2, lambda: 1)
-        mock_function, return_value, mock_animation, msg, step, signal = (
+        mock_function, return_value, mock_animation, step, signal = (
             supervisor_test_variables())
         with apatch('clanim.util.Signal', return_value=signal):
-            result = util._sync_supervisor(mock_function, mock_animation, step, msg, *args)
-        mock_animate_cli.assert_called_once_with(mock_animation, step, msg, signal)
+            result = util._sync_supervisor(mock_function, mock_animation, step, *args)
+        mock_animate_cli.assert_called_once_with(mock_animation, step, signal)
         mock_function.assert_called_once_with(*args)
         self.assertEqual(return_value, result)
 
     @apatch('clanim.util.animate_cli')
     async def test_sync_supervisor_with_kwargs_function(self, mock_animate_cli):
         kwargs = {'herro': 2, 'no_way': 'HERRO'}
-        mock_function, return_value, mock_animation, msg, step, signal = (
+        mock_function, return_value, mock_animation, step, signal = (
             supervisor_test_variables())
         with apatch('clanim.util.Signal', return_value=signal):
-            result = util._sync_supervisor(mock_function, mock_animation, step, msg, **kwargs)
-        mock_animate_cli.assert_called_once_with(mock_animation, step, msg, signal)
+            result = util._sync_supervisor(mock_function, mock_animation, step, **kwargs)
+        mock_animate_cli.assert_called_once_with(mock_animation, step, signal)
         mock_function.assert_called_once_with(**kwargs)
         self.assertEqual(return_value, result)
 
     @apatch('clanim.util.animate_cli')
     async def test_sync_supervisor_with_raising_function(self, mock_animate_cli):
-        mock_function, _, mock_animation, msg, step, signal = (
+        mock_function, _, mock_animation, step, signal = (
             supervisor_test_variables(raises=True))
         with self.assertRaises(Exception):
-            util._sync_supervisor(mock_function, mock_animation, step, msg, signal)
+            util._sync_supervisor(mock_function, mock_animation, step, signal)
 
     @apatch('clanim.util.animate_cli')
     async def test_async_supervisor_with_noargs_function(self, mock_animate_cli):
-        mock_function, return_value, mock_animation, msg, step, signal = (
+        mock_function, return_value, mock_animation, step, signal = (
             supervisor_test_variables(sync=False))
         with apatch('clanim.util.Signal', return_value=signal):
-            result = await util._async_supervisor(mock_function, mock_animation, step, msg)
-        mock_animate_cli.assert_called_once_with(mock_animation, step, msg, signal)
+            result = await util._async_supervisor(mock_function, mock_animation, step)
+        mock_animate_cli.assert_called_once_with(mock_animation, step, signal)
         mock_function.assert_called_once()
         self.assertEqual(return_value, result)
 
     @apatch('clanim.util.animate_cli')
     async def test_async_supervisor_with_args_function(self, mock_animate_cli):
         args = ('herro', 2, lambda: 1)
-        mock_function, return_value, mock_animation, msg, step, signal = (
+        mock_function, return_value, mock_animation, step, signal = (
             supervisor_test_variables(sync=False))
         with apatch('clanim.util.Signal', return_value=signal):
-            result = await util._async_supervisor(mock_function, mock_animation, step, msg, *args)
-        mock_animate_cli.assert_called_once_with(mock_animation, step, msg, signal)
+            result = await util._async_supervisor(mock_function, mock_animation, step, *args)
+        mock_animate_cli.assert_called_once_with(mock_animation, step, signal)
         mock_function.assert_called_once_with(*args)
         self.assertEqual(return_value, result)
 
     @apatch('clanim.util.animate_cli')
     async def test_async_supervisor_with_kwargs_function(self, mock_animate_cli):
         kwargs = {'herro': 2, 'no_way': 'HERRO'}
-        mock_function, return_value, mock_animation, msg, step, signal = (
+        mock_function, return_value, mock_animation, step, signal = (
             supervisor_test_variables(sync=False))
         with apatch('clanim.util.Signal', return_value=signal):
-            result = await util._async_supervisor(mock_function, mock_animation, step, msg, **kwargs)
-        mock_animate_cli.assert_called_once_with(mock_animation, step, msg, signal)
+            result = await util._async_supervisor(mock_function, mock_animation, step, **kwargs)
+        mock_animate_cli.assert_called_once_with(mock_animation, step, signal)
         mock_function.assert_called_once_with(**kwargs)
         self.assertEqual(return_value, result)
 
     @apatch('clanim.util.animate_cli')
     async def test_async_supervisor_with_raising_function(self, mock_animate_cli):
-        mock_function, _, mock_animation, msg, step, signal = (
+        mock_function, _, mock_animation, step, signal = (
             supervisor_test_variables(sync=False, raises=True))
         with self.assertRaises(Exception):
-            await util._sync_supervisor(mock_function, mock_animation, step, msg, signal)
+            await util._sync_supervisor(mock_function, mock_animation, step, signal)
