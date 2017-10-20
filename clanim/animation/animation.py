@@ -7,7 +7,8 @@
 """
 import itertools
 import functools
-from ..util import concatechain, BACKSPACE_GEN, BACKLINE_GEN, BACKSPACE, BACKLINE
+from ..util import concatechain, BACKSPACE_GEN, BACKLINE_GEN
+from ..cli import BACKLINE, BACKSPACE
 from .alnum import big_message
 
 class _Animation:
