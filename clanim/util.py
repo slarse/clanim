@@ -7,17 +7,25 @@
 .. moduleauthor:: Simon Larsén <slarse@kth.se>
 """
 import asyncio
+import time
 import functools
 import itertools
 import threading
-from .cli import animate_cli, BACKLINE, BACKSPACE
+import logging
+import daiquiri
+from .cli import animate_cli, BACKSPACE
+
+daiquiri.setup(level=logging.ERROR)
+LOGGER = daiquiri.getLogger(__name__)
 
 BACKSPACE_GEN = lambda size: itertools.cycle([BACKSPACE*size])
 BACKLINE_GEN = lambda lines: itertools.cycle(['\033[F'*(lines-1)])
 
 class Signal:
     """A wrapper for a boolean value used to signal the end of a thread's
-    execution."""
+    execution. This is not thread-safe, so it should not be used in contexts
+    where precision matters.
+    """
     done = False
 
 def get_supervisor(func):
@@ -48,17 +56,36 @@ async def _async_supervisor(func, animation_, step, *args, **kwargs):
         Any exception that is thrown when executing func.
     """
     signal = Signal()
-    animation = threading.Thread(target=animate_cli,
-                                 args=(animation_, step, signal))
-    animation.start()
+    loop = asyncio.get_event_loop()
+    anim = threading.Thread(target=animate_cli,
+                            args=(animation_, step, signal))
+    monitor = threading.Thread(target=_unexpected_loop_exit_monitor,
+                               args=(signal, loop))
+    anim.start()
+    monitor.start()
     try:
         result = await func(*args, **kwargs)
-    except Exception:
+    except:
         raise
     finally:
         signal.done = True
-        animation.join()
+        anim.join()
+        monitor.join()
     return result
+
+def _unexpected_loop_exit_monitor(signal, loop):
+    """Monitors the asyncio loop and the signal. Terminates if the signal is done,
+    and also if the loop closes prematurely.
+
+    Args:
+        signal (Signal): A Signal.
+        loop (asyncio.BaseEventLoop): An asyncio loop.
+    """
+    while not signal.done:
+        time.sleep(.1)
+        if loop.is_closed():
+            # loop was shut down unexpectedly
+            signal.done = True
 
 def _sync_supervisor(func, animation_, step, *args, **kwargs):
     """Supervisor for running an animation with a synchronous function.
