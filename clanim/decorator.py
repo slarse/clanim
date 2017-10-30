@@ -5,6 +5,7 @@
     :synopsis: This module contains all of the clanim decorators.
 .. moduleauthor:: Simon Larsén <slarse@kth.se>
 """
+import asyncio
 import logging
 import functools
 import daiquiri
@@ -15,6 +16,7 @@ daiquiri.setup(level=logging.ERROR)
 LOGGER = daiquiri.getLogger(__name__)
 
 ANNOTATED = '_clanim_annotated'
+ASYNC_ANIMATED = '_clanim_asnyc_animated'
 
 class Annotate:
     """A decorator meant for decorating functions that are decorated with the
@@ -33,7 +35,7 @@ class Annotate:
     def __init__(self, before_msg, after_msg):
         """
         Args:
-            working_msg (str): A message to print before the function runs.
+            before_msg (str): A message to print before the function runs.
             after_msg (str): A message to print after the function has finished.
         """
         self._before_msg = before_msg
@@ -41,16 +43,50 @@ class Annotate:
 
     def __call__(self, func, *args, **kwargs):
         """
+
         Args:
             func (function): The annotated function.
             args (tuple): Arguments for func.
-            kwrags (dict): Keyword arguments for func.
+            kwargs (dict): Keyword arguments for func.
+        """
+        if asyncio.iscoroutinefunction(func) or (hasattr(func, ASYNC_ANIMATED) 
+                                                 and getattr(func, ASYNC_ANIMATED)):
+            return self._async_call(func, *args, **kwargs)
+        else:
+            return self._sync_call(func, *args, **kwargs)
+
+    def _sync_call(self, func, *args, **kwargs):
+        """__call__ function for regular synchronous functions.
+
+        Args:
+            func (function): The annotated function.
+            args (tuple): Arguments for func.
+            kwargs (dict): Keyword arguments for func.
         """
         @functools.wraps(func)
         def wrapper(*args, **kwargs):
             if self._before_msg:
                 print(self._before_msg)
             result = func(*args, **kwargs)
+            if self._after_msg:
+                print(self._after_msg)
+            return result
+        setattr(wrapper, ANNOTATED, True)
+        return wrapper
+
+    def _async_call(self, func, *args, **kwargs):
+        """__call__ functino for asyncio coroutines.
+
+        Args:
+            func (function): The annotated function.
+            args (tuple): Arguments for func.
+            kwargs (dict): Keyword arguments for func.
+        """
+        @functools.wraps(func)
+        async def wrapper(*args, **kwargs):
+            if self._before_msg:
+                print(self._before_msg)
+            result = await func(*args, **kwargs)
             if self._after_msg:
                 print(self._after_msg)
             return result
@@ -81,6 +117,8 @@ class Animate:
             raise TypeError("argument 'func' for {!r} must be "
                             "callable".format(self.__class__.__name__))
         if callable(func):
+            if asyncio.iscoroutinefunction(func):
+                setattr(self, ASYNC_ANIMATED, True)
             self._raise_if_annotated(func)
             partial = functools.partial(self._call_without_kwargs, animation,
                                         step, func)
@@ -124,6 +162,8 @@ class Animate:
         @functools.wraps(func)
         def wrapper(*args, **kwargs):
             return get_supervisor(func)(animation_, step, *args, **kwargs)
+        if asyncio.iscoroutinefunction(func):
+            setattr(wrapper, ASYNC_ANIMATED, True)
         return wrapper
 
     def __call__(self, func=None, *args, **kwargs):
