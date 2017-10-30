@@ -23,8 +23,8 @@ class Annotate:
     Animation decorator. It prints a message to stdout before and/or after the
     function has finished.
 
-    This decorator can also be used standalon, but you should NOT decorate a
-    function that is decorated with Animate with Annotate. That is to say,
+    This decorator can also be used standalone, but you should NOT decorate a
+    function that is decorated with Annotate with Animate. That is to say,
     the decorator order must be like this:
 
         @Annotate
@@ -43,7 +43,6 @@ class Annotate:
 
     def __call__(self, func, *args, **kwargs):
         """
-
         Args:
             func (function): The annotated function.
             args (tuple): Arguments for func.
@@ -98,9 +97,6 @@ class Animate:
     Animate uses introspection to figure out if the function it decorates is
     synchronous (defined with 'def') or asynchronous (defined with 'async def'),
     and works equally well with both.
-
-    The decorator takes a single, optional argument: The animation to be used.
-    If no argument is given, the 'arrow' animation is selected by default.
     """
 
     def __init__(self, func=None, *, animation=arrow(), step=.1):
