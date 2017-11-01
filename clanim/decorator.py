@@ -5,8 +5,10 @@
     :synopsis: This module contains all of the clanim decorators.
 .. moduleauthor:: Simon Larsén <slarse@kth.se>
 """
+import asyncio
 import logging
 import functools
+import sys
 import daiquiri
 from .animation.singleline import arrow
 from .util import get_supervisor
@@ -15,14 +17,15 @@ daiquiri.setup(level=logging.ERROR)
 LOGGER = daiquiri.getLogger(__name__)
 
 ANNOTATED = '_clanim_annotated'
+ASYNC_ANIMATED = '_clanim_asnyc_animated'
 
 class Annotate:
     """A decorator meant for decorating functions that are decorated with the
     Animation decorator. It prints a message to stdout before and/or after the
     function has finished.
 
-    This decorator can also be used standalon, but you should NOT decorate a
-    function that is decorated with Animate with Annotate. That is to say,
+    This decorator can also be used standalone, but you should NOT decorate a
+    function that is decorated with Annotate with Animate. That is to say,
     the decorator order must be like this:
 
         @Annotate
@@ -30,29 +33,79 @@ class Annotate:
         def some_function()
             pass
     """
-    def __init__(self, before_msg, after_msg):
-        """
+    def __init__(self, *,start_msg=None, end_msg=None, start_no_nl=False):
+        """Note that both arguments are keyword only arguments.
+
         Args:
-            working_msg (str): A message to print before the function runs.
-            after_msg (str): A message to print after the function has finished.
+            start_msg (str): A message to print before the function runs.
+            end_msg (str): A message to print after the function has finished.
+            start_no_nl (bool): If True, no newline is appended after the
+            start_msg.
         """
-        self._before_msg = before_msg
-        self._after_msg = after_msg
+        if start_msg is None and end_msg is None:
+            raise ValueError(
+                "At least one of 'start_msg' and 'end_msg' must be specified.")
+        self._start_msg = start_msg
+        self._end_msg = end_msg
+        self._start_no_nl = start_no_nl
+
+    def _start_print(self):
+        """Print the start message with or without newline depending on the
+        self._start_no_nl variable.
+        """
+        if self._start_no_nl:
+            sys.stdout.write(self._start_msg)
+            sys.stdout.flush()
+        else:
+            print(self._start_msg)
 
     def __call__(self, func, *args, **kwargs):
         """
         Args:
             func (function): The annotated function.
             args (tuple): Arguments for func.
-            kwrags (dict): Keyword arguments for func.
+            kwargs (dict): Keyword arguments for func.
+        """
+        if asyncio.iscoroutinefunction(func) or (hasattr(func, ASYNC_ANIMATED) 
+                                                 and getattr(func, ASYNC_ANIMATED)):
+            return self._async_call(func, *args, **kwargs)
+        else:
+            return self._sync_call(func, *args, **kwargs)
+
+    def _sync_call(self, func, *args, **kwargs):
+        """__call__ function for regular synchronous functions.
+
+        Args:
+            func (function): The annotated function.
+            args (tuple): Arguments for func.
+            kwargs (dict): Keyword arguments for func.
         """
         @functools.wraps(func)
         def wrapper(*args, **kwargs):
-            if self._before_msg:
-                print(self._before_msg)
+            if self._start_msg:
+                self._start_print()
             result = func(*args, **kwargs)
-            if self._after_msg:
-                print(self._after_msg)
+            if self._end_msg:
+                print(self._end_msg)
+            return result
+        setattr(wrapper, ANNOTATED, True)
+        return wrapper
+
+    def _async_call(self, func, *args, **kwargs):
+        """__call__ functino for asyncio coroutines.
+
+        Args:
+            func (function): The annotated function.
+            args (tuple): Arguments for func.
+            kwargs (dict): Keyword arguments for func.
+        """
+        @functools.wraps(func)
+        async def wrapper(*args, **kwargs):
+            if self._start_msg:
+                print(self._start_msg)
+            result = await func(*args, **kwargs)
+            if self._end_msg:
+                print(self._end_msg)
             return result
         setattr(wrapper, ANNOTATED, True)
         return wrapper
@@ -62,9 +115,6 @@ class Animate:
     Animate uses introspection to figure out if the function it decorates is
     synchronous (defined with 'def') or asynchronous (defined with 'async def'),
     and works equally well with both.
-
-    The decorator takes a single, optional argument: The animation to be used.
-    If no argument is given, the 'arrow' animation is selected by default.
     """
 
     def __init__(self, func=None, *, animation=arrow(), step=.1):
@@ -81,6 +131,8 @@ class Animate:
             raise TypeError("argument 'func' for {!r} must be "
                             "callable".format(self.__class__.__name__))
         if callable(func):
+            if asyncio.iscoroutinefunction(func):
+                setattr(self, ASYNC_ANIMATED, True)
             self._raise_if_annotated(func)
             partial = functools.partial(self._call_without_kwargs, animation,
                                         step, func)
@@ -124,6 +176,8 @@ class Animate:
         @functools.wraps(func)
         def wrapper(*args, **kwargs):
             return get_supervisor(func)(animation_, step, *args, **kwargs)
+        if asyncio.iscoroutinefunction(func):
+            setattr(wrapper, ASYNC_ANIMATED, True)
         return wrapper
 
     def __call__(self, func=None, *args, **kwargs):
