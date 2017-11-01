@@ -8,6 +8,7 @@
 import asyncio
 import logging
 import functools
+import sys
 import daiquiri
 from .animation.singleline import arrow
 from .util import get_supervisor
@@ -32,14 +33,31 @@ class Annotate:
         def some_function()
             pass
     """
-    def __init__(self, before_msg, after_msg):
-        """
+    def __init__(self, *,start_msg=None, end_msg=None, start_no_nl=False):
+        """Note that both arguments are keyword only arguments.
+
         Args:
-            before_msg (str): A message to print before the function runs.
-            after_msg (str): A message to print after the function has finished.
+            start_msg (str): A message to print before the function runs.
+            end_msg (str): A message to print after the function has finished.
+            start_no_nl (bool): If True, no newline is appended after the
+            start_msg.
         """
-        self._before_msg = before_msg
-        self._after_msg = after_msg
+        if start_msg is None and end_msg is None:
+            raise ValueError(
+                "At least one of 'start_msg' and 'end_msg' must be specified.")
+        self._start_msg = start_msg
+        self._end_msg = end_msg
+        self._start_no_nl = start_no_nl
+
+    def _start_print(self):
+        """Print the start message with or without newline depending on the
+        self._start_no_nl variable.
+        """
+        if self._start_no_nl:
+            sys.stdout.write(self._start_msg)
+            sys.stdout.flush()
+        else:
+            print(self._start_msg)
 
     def __call__(self, func, *args, **kwargs):
         """
@@ -64,11 +82,11 @@ class Annotate:
         """
         @functools.wraps(func)
         def wrapper(*args, **kwargs):
-            if self._before_msg:
-                print(self._before_msg)
+            if self._start_msg:
+                self._start_print()
             result = func(*args, **kwargs)
-            if self._after_msg:
-                print(self._after_msg)
+            if self._end_msg:
+                print(self._end_msg)
             return result
         setattr(wrapper, ANNOTATED, True)
         return wrapper
@@ -83,11 +101,11 @@ class Annotate:
         """
         @functools.wraps(func)
         async def wrapper(*args, **kwargs):
-            if self._before_msg:
-                print(self._before_msg)
+            if self._start_msg:
+                print(self._start_msg)
             result = await func(*args, **kwargs)
-            if self._after_msg:
-                print(self._after_msg)
+            if self._end_msg:
+                print(self._end_msg)
             return result
         setattr(wrapper, ANNOTATED, True)
         return wrapper
