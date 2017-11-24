@@ -186,8 +186,14 @@ _EXCLAMATION = ['  X  ',
                 '     ',
                 '  X  ']
 
+_QUESTION = [' XXX ',
+             'X   X',
+             '   X ',
+             '  X  ',
+             '  X  ']
+
 CHARS = {'A': _A, 'B': _B, 'C': _C, 'D': _D, 'E': _E, 'F': _F, 'G': _G, 'H': _H,
          'I': _I, 'J': _J, 'K': _K, 'L': _L, 'M': _M, 'N': _N, 'O': _O, 'P': _P,
          'Q': _Q, 'R': _R, 'S': _S, 'T': _T, 'U': _U, 'V': _V, 'W': _W, 'X': _X,
          'Y': _Y, 'Z': _Z, ' ': _SPACE, '!': _EXCLAMATION, ',': _COMMA,
-         '.': _DOT}
+         '.': _DOT, '?': _QUESTION}
