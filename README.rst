@@ -31,6 +31,15 @@ with decorators and command line animations. It doesn't seem like ``decorating``
 currently supports async functions, so that's the one area where ``clanim`` 
 potentially is superior at this time.
 
+.. important::
+    
+    The API and general functionality of ``clanim`` is likely to change
+    dramatically in the coming iterations. I have decided to change the purpose
+    of the project and make it more of a toolkit for creating animations, than a
+    ready-to-use animation library. I may split it into two packages, one with
+    ready-to-use animations, and one with the tools needed to easily create new
+    animations.
+
 Requirements
 ============
 Python 3.6 or higher and the ``daiquiri`` package (used for development and
@@ -38,36 +47,65 @@ will probably be removed in a final release).
 
 Quickstart
 ==========
-The API for ``clanim`` consists of the ``@animate`` decorator, as well as the
-animations in ``clanim.animation``. All of these are package level imports,
-so e.g. the ``@animate`` decorator can be accessed like this:
+The user API for clanim is contained wholly on the package level. That is to
+say, only the imports available from ``clanim`` is intended for non-developers.
+``clanim`` works both for regular functions, as well as async functions.
+Most notably, there are the ``animate`` and ``annotate`` decorators. ``animate``
+is the core decorator used to animate functions, and ``annotate`` is used to
+display messages before and/or after an animated function.
+
+.. DANGER::
+
+    Print statements inside of a functions annotated with ``animate`` will
+    interfere with the animation, so use ``annotate`` instead.
+
+.. DANGER::
+
+    Recursive functions are currently not supported! If you have a recursive
+    function, you may wrap it in another (and animated) function which simply
+    issues a call to the recursive function with the same arguments.
+
+.. important::
+
+    When using clanim to annotate async functions, it is very important that the
+    event loop is exited properly. For example, an unhandled keyboard interrupt
+    in the middle of an animated async function will cause the animation thread
+    to keep spinning forever. Therefore, always put the starting of the even
+    loop in a try block and make sure that the event loop is closed no matter
+    what.
+
+Here are som minimal examples:
 
 .. code:: python
 
-    # option 1
-    import clanim
+    import time
+    from clanim import animate, scrolling_text
 
-    @clanim.animate
-    def func():
-        time.sleep(2)
-
-    # option 2
-    from clanim import animate
-
+    # if no parameter is given, the default arrow animation is used
     @animate
-    def func():
-        time.sleep(2)
+    def slow(n):
+        time.sleep(n)
 
-The ``animate`` decorator works both with and without parameters, and supports
-both regular functions:
+    # scrolling_text is a large, scrolling text animation
+    # step determines the time between frames
+    @animate(animation=scrolling_text("Crunching numbers ..."), step=0.05)
+    def fibo(n):
+        if n < 0:
+            raise ValueError("Undefined for n < 0")
+        fibo_recursive(n)
 
-.. image:: images/clanim_sync.gif
-    :alt: animate decorator with regular functions
+    def fibo_recursive(n):
+        if n == 0 or n == 1:
+            return n
+        return fibo(n-1) + fibo(n-2)
 
-and async functions:
 
-.. image:: images/clanim_async.gif
-    :alt: animate decorator with async functions
+
+The biggest new addition to the 0.2.0 release is the ``scrolling_text``
+animation, which is demonstrated below.
+
+.. image:: images/scrolling_text.gif
+    :alt: The scrolling_text animation
 
 Install
 =======
@@ -80,7 +118,6 @@ very short amount of time. A per-user install can be done like this:
 
 1. Execute ``pip install --user clanim`` to install the package.
 2. Further steps to be added ...
-
 
 Option 2: Clone the repo and the install with ``pip``
 -----------------------------------------------------
@@ -96,6 +133,12 @@ yourself, I suggest going with the release version.
     - For development, use ``pip install -e .`` in a ``virtualenv``.
 3. Further steps to be added ...
 
+Wanted improvements
+===================
+* Add more animations
+* Decouple animation update from rendering
+* Add support for recursive functions
+
 License
 =======
 This software is licensed under the MIT License. See the `license file`_ file
@@ -105,7 +148,7 @@ Contributing
 ============
 I will happily take contributions, especially in terms of new animations.
 Submit a pull request if you have an idea, and let me approve the idea before
-you start working on something I would not like in the project!
+you put serious work into something I would not like in the project!
 
 .. _license file: LICENSE
 .. _setup.py: setup.py
