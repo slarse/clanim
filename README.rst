@@ -35,10 +35,13 @@ potentially is superior at this time.
     
     The API and general functionality of ``clanim`` is likely to change
     dramatically in the coming iterations. I have decided to change the purpose
-    of the project and make it more of a toolkit for creating animations, than a
-    ready-to-use animation library. I may split it into two packages, one with
-    ready-to-use animations, and one with the tools needed to easily create new
-    animations.
+    of the project and make it more of a toolkit for creating animations, than
+    a ready-to-use animation library. I may split it into two packages, one
+    with ready-to-use animations, and one with the tools needed to easily
+    create new animations. There are also problems with incorrect use of the
+    functools wraps decorator such that decorated a function's meta info is
+    changed. This is solved in the dev version of the new project and will be
+    made available when the rest of the overhaul is done.
 
 Requirements
 ============
