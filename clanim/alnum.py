@@ -5,8 +5,7 @@
     :synopsis: This module contains iterables for alphanumerical characters.
 .. moduleauthor:: Simon Larsén <slarse@kth.se>
 """
-from ..util import BACKLINE_GEN
-from .big_char import CHARS
+from clanim.big_char import CHARS
 
 def big_message(msg, width=50):
     """Yields strings that animate large scrolling text, followed by whitespace

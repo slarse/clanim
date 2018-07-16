@@ -9,24 +9,10 @@ author: simon larsén
 """
 import unittest
 from .context import clanim
-from clanim.animation import animation
-from clanim.animation import singleline
-from clanim.animation import multiline
+from clanim import singleline
+from clanim import multiline
 
 class AnimationTest(unittest.TestCase):
-
-    def test_raise_value_error_if_width_is_too_small(self):
-        values = [-100, -2, 0, 1]
-        for val in values:
-            self.assertRaises(
-                ValueError,
-                animation._raise_value_error_if_width_is_too_small,
-                val)
-
-    def test_dont_raise_value_error_if_width_is_good(self):
-        values = [2, 45, 110]
-        for val in values:
-            animation._raise_value_error_if_width_is_too_small(val)
 
     def test_char_wave_raises_with_too_small_width(self):
         values = [-100, -2, 0, 1]

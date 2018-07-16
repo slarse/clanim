@@ -1,3 +1,5 @@
-from .decorator import Animate as animate, Annotate as annotate
-from .animation.singleline import arrow, char_wave, spinner
-from .animation.multiline import arrows, char_waves, spinners, scrolling_text
+from clanim.singleline import spinner, arrow, char_wave
+from clanim.multiline import spinners, arrows, char_waves, scrolling_text
+
+__all__ = 'spinner arrow char_wave spinners arrows char_waves scrolling_text'\
+        .split()

@@ -1,28 +1,16 @@
-Documentation for pdfebc-web
+Module reference for clanim
 *****************************
 
 .. automodule:: clanim
 
-decorator
-====================
-
-.. automodule:: clanim.decorator
+.. automodule:: clanim.singleline
     :members:
 
-animation
-====================
-
-.. automodule:: clanim.animation
+.. automodule:: clanim.multiline
     :members:
 
-util
-====================
-
-.. automodule:: clanim.util
+.. automodule:: clanim.alnum
     :members:
 
-cli
-====================
-
-.. automodule:: clanim.cli
+.. automodule:: clanim.big_char
     :members:

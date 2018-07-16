@@ -1,9 +1,7 @@
 # -*- coding: utf-8 -*-
 """
 .. module:: big_char
-    :platform: Unix
-    :synopsis: This module contains all big characters for the scrolling text
-    animation.
+    :synopsis: This module contains all big characters for the scrolling text animation.
 .. moduleauthor:: Simon Larsén <slarse@kth.se>
 """
 

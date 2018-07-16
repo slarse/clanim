@@ -8,8 +8,9 @@ Welcome to clanim's documentation!
 
 .. toctree::
    :maxdepth: 2
-   :caption: Contents:
-    code
+
+   api
+   code
 
 
 

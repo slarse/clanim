@@ -9,7 +9,7 @@ Author: Simon Larsén
 """
 import unittest
 from .context import clanim
-from clanim.animation import alnum
+from clanim import alnum
 
 class AlnumTest(unittest.TestCase):
 
